@@ -1,0 +1,203 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto]
+}
+
+model User {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String             @unique
+  password      String
+  refreshToken  String?            @unique
+  role          Role
+  isVerified    Boolean            @default(false)
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @db.Timestamptz(3)
+  Administrator Administrator?
+  customer      Customer?
+  verifToken    EmailVerification?
+  Moderator     Moderator?
+}
+
+model Administrator {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String      @unique @db.Uuid
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moderators Moderator[]
+}
+
+model Moderator {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String        @unique @db.Uuid
+  administratorId String        @db.Uuid
+  administrator   Administrator @relation(fields: [administratorId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[]
+}
+
+model Customer {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName   String
+  lastName    String
+  birthDate   DateTime
+  phoneNumber String
+  userId      String   @unique @db.Uuid
+  cart        Cart?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders      Order[]
+}
+
+model EmailVerification {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  verifToken String   @unique
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt  DateTime @default(dbgenerated("(now() + '01:00:00'::interval)")) @db.Timestamptz(3)
+  userId     String   @unique @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String
+  price       Decimal
+  club        Club
+  category    ProductCategory
+  age         AgeCategory
+  gender      Gender
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  moderatorId String          @db.Uuid
+  imageUrl    String
+  Accessory   Accessory?
+  clothing    Clothing[]
+  Footwear    Footwear[]
+  OrderItem   OrderItem[]
+  moderator   Moderator       @relation(fields: [moderatorId], references: [id])
+}
+
+model Clothing {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  size          ClothingSize
+  stockQuantity Int
+  productId     String       @db.Uuid
+  product       Product      @relation(fields: [productId], references: [id])
+}
+
+model Footwear {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  size          FootwearSize
+  stockQuantity Int
+  productId     String       @db.Uuid
+  product       Product      @relation(fields: [productId], references: [id])
+}
+
+model Accessory {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stockQuantity Int
+  productId     String  @unique @db.Uuid
+  product       Product @relation(fields: [productId], references: [id])
+}
+
+model Cart {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  total      Decimal     @default(0)
+  quantity   Int         @default(0)
+  createdAt  DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime    @updatedAt @db.Timestamptz(3)
+  customerId String      @unique @db.Uuid
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+}
+
+model Order {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  total      Decimal
+  quantity   Int
+  status     OrderStatus @default(CREATED)
+  createdAt  DateTime    @default(now()) @db.Timestamptz(3)
+  customerId String      @db.Uuid
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  total     Decimal
+  quantity  Int      @default(1)
+  size      String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  productId String   @db.Uuid
+  orderId   String?  @db.Uuid
+  cartId    String?  @db.Uuid
+  Cart      Cart?    @relation(fields: [cartId], references: [id])
+  order     Order?   @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  MODERATOR
+  ADMINISTRATOR
+}
+
+enum Club {
+  BAYERN_MUNICH
+  BORUSSIA_DORTMUND
+  RB_LEIPZIG
+  BAYER_04_LEVERKUSEN
+  HOFFENHEIM
+}
+
+enum ProductCategory {
+  UPPER_CLOTHING
+  LOWER_CLOTHING
+  FOOTWEAR
+  ACCESSORIES
+}
+
+enum AgeCategory {
+  CHILD
+  ADULT
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  UNISEX
+}
+
+enum ClothingSize {
+  SIZE_S
+  SIZE_M
+  SIZE_L
+  SIZE_XL
+}
+
+enum FootwearSize {
+  SIZE_33
+  SIZE_34
+  SIZE_35
+  SIZE_36
+  SIZE_37
+  SIZE_38
+  SIZE_39
+  SIZE_40
+  SIZE_41
+  SIZE_42
+}
+
+enum OrderStatus {
+  CREATED
+  REVIEW
+  CONFIRMED
+  REJECTED
+  SHIPPED
+  DELIVERED
+}

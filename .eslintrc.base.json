@@ -1,0 +1,63 @@
+{
+  "root": true,
+
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {  
+    "sourceType": "module",
+    "tsconfigRootDir": "./"
+  },
+
+  "env": {
+    "node": true
+  },
+
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript",
+    "plugin:prettier/recommended"
+  ],
+
+  "plugins": ["@typescript-eslint", "import", "prettier"],
+
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts"]
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [".ts"]
+      },
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
+    }
+  },
+
+  "rules": {
+    "@typescript-eslint/no-require-imports": "warn",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-shadow": "off",
+    "no-console": ["warn", { "allow": ["error", "info"] }],
+    "import/no-cycle": "error",
+    "import/no-unresolved": "error",
+    "import/prefer-default-export": "off",
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "internal", "parent", ["sibling", "index"]],
+        "newlines-between": "always",
+        "pathGroupsExcludedImportTypes": ["internal"]
+      }
+    ],
+    "max-len": ["error", { "code": 120 }],
+    "prettier/prettier": ["error"]
+  },
+  "ignorePatterns": ["node_modules", "dist"]
+}
